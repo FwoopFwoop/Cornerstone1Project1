@@ -13,9 +13,6 @@ const int buttonPin = 0;
 const int redPin = 13;
 const int greenPin = 12;
 const int bluePin = 11;
-
-//Output pin for buzzer
-const int buzzerPin = 1;
   
 //Interval constants for time control, all in milliseconds
 const int readInterval = 1000; 
@@ -98,12 +95,10 @@ void heatUp(){
   //Flash red and yellow to indicate the pad is heating up
   currentColor = (currentColor==red)? yellow : red;
 
-  //If the pad is heated up, turn on blue "Ready to Read" LED, make a noize,then exit heating mode
+  //If the pad is heated up, turn on blue "Ready to Read" LED, then exits heating mode
   if(getDegreesC(tempPin2)>=padReadyTemp){
     currentColor = blue;
-    setLED();
     heatingUp = false;
-    buzz(3000);
     return;
   }
 
@@ -179,11 +174,6 @@ void serialTemp(){
 
   //Wait an interval before reading again
   delay(readInterval);
-}
-
-//Buzzes the buzzer for the given time (in millisecconds)
-void buzz(int t){
-  
 }
 
 //Returns the temperature of the thermometer in degrees celcius
