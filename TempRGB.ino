@@ -13,7 +13,10 @@ const int buttonPin = 0;
 const int redPin = 13;
 const int greenPin = 12;
 const int bluePin = 11;
-  
+
+//Output pin for buzzer noises
+const int buzzerPin = 9;
+
 //Interval constants for time control, all in milliseconds
 const int readInterval = 1000; 
 const int flashInterval = 500;
@@ -28,7 +31,7 @@ bool heatingUp;
 bool checkingMetal;
 
 //Calculation reference data
-const int padReadyTemp = 50; //TODO: FIND. THIS IS TEMPORARY FOR TESTING PURPOSES 
+const int padReadyTemp = 60; 
 
 //Enum for the different color options on the RGB LED
 enum color{
@@ -53,6 +56,7 @@ void setup() {
   pinMode(redPin, OUTPUT);
   pinMode(greenPin, OUTPUT);
   pinMode(bluePin, OUTPUT);
+  pinMode(buzzerPin, OUTPUT);
   pinMode(buttonPin, INPUT);
 
   //Set default states for program flow control
@@ -73,7 +77,9 @@ void loop() {
 
   //Button behaviour
   if(buttonState==LOW){
-    serialOn = true;
+    //serialOn = true;
+    //badSong();
+    goodSong();
   }
 
   //Control flow by running one of several modes
@@ -99,10 +105,133 @@ void heatUp(){
   if(getDegreesC(tempPin2)>=padReadyTemp){
     currentColor = blue;
     heatingUp = false;
+    readySong();
     return;
   }
 
   delay(flashInterval);
+}
+
+//Plays a song to indicate the coin is probably good
+void goodSong(){
+  char notes[] = "DCbag g FFFFECEFEEEDCEDaCabbbCaaE"; 
+  int beats[] = {3,1,3,1,1,1,1,1,1,1,1,2,1,2,1,2,4,1,1,1,1,2,1,1,1,1,2, 2, 2, 2, 2, 2, 5};
+  int songLength = 33;
+  int tempo = 236;
+
+  int i, duration;
+
+  for (i = 0; i < songLength; i++){
+
+    //How long the note should play based on the note and tempo
+    duration = beats[i] * tempo;
+
+    //If the note is a rest, pause
+    if (notes[i] == ' '){
+      delay(duration);  
+    }
+    //Otherwise, play the note
+    else{
+      tone(buzzerPin, frequency(notes[i]), duration);
+      delay(duration); 
+    }
+    
+    delay(tempo/10); 
+  }
+}
+
+//Plays a song to indicate the pad is heated
+void readySong(){
+  char notes[] = "gcrfgcrfd"; 
+  int beats[] = {6, 6, 1, 1, 4, 4, 1, 1, 6};
+  int songLength = 9;
+  int tempo = 300;
+
+  int i;
+  int duration;
+
+  for (i = 0; i < songLength; i++){
+
+    //How long the note should play based on the note and tempo
+    duration = beats[i] * tempo;
+
+    //If the note is a rest, pause
+    if (notes[i] == ' '){
+      delay(duration);  
+    }
+    
+    //Otherwise, play the note
+    else{
+      tone(buzzerPin, frequency(notes[i]), duration);
+      delay(duration); 
+    }
+    
+    delay(tempo/10); 
+  }
+}
+
+//Plays a song to indicate the coin is probably bad
+void badSong(){
+  char notes[] = "aaafCafCaEEEFCqfCa"; 
+  int beats[] = {2, 2, 2, 1, 1, 2, 1, 1, 4, 2, 2, 2, 1, 1, 2, 1, 1, 2};
+  int songLength = 18;
+  int tempo = 206;
+
+  int i;
+  int duration;
+
+  for (i = 0; i < songLength; i++){
+
+    //How long the note should play based on the note and tempo
+    duration = beats[i] * tempo;
+
+    //If the note is a rest, pause
+    if (notes[i] == ' '){
+      delay(duration);  
+    }
+    
+    //Otherwise, play the note
+    else{
+      tone(buzzerPin, frequency(notes[i]), duration);
+      delay(duration); 
+    }
+    
+    delay(tempo/10); 
+  }
+}
+
+
+//Returns a numeric frequency given an alphabetic note
+int frequency(char note){
+  // This function takes a note character (a-g), and returns the
+  // corresponding frequency in Hz for the tone() function.
+
+  int i;
+  const int numNotes = 12;  // number of notes we're storing
+
+  // The following arrays hold the note characters and their
+  // corresponding frequencies. The last "C" note is uppercase
+  // to separate it from the first lowercase "c". If you want to
+  // add more notes, you'll need to use unique characters.
+
+  // For the "char" (character) type, we put single characters
+  // in single quotes.
+
+  char names[] = {     'c', 'd', 'r', 'e', 'f', 'g', 'q', 'a', 'w', 'b', 'C','D' ,'E', 'F'};
+  int frequencies[] = {262, 294, 311 ,330, 349, 392, 415, 440, 466, 494, 523, 587, 659, 698};
+
+  // Now we'll search through the letters in the array, and if
+  // we find it, we'll return the frequency for that note.
+
+  for (i = 0; i < numNotes; i++)  // Step through the notes
+  {
+    if (names[i] == note)         // Is this the one?
+    {
+      return(frequencies[i]);     // Yes! Return the frequency
+    }
+  }
+  return(0);  // We looked through everything and didn't find it,
+              // but we still need to return a value, so return 0.
 }
 
 //Changes the LED to the required color
@@ -162,7 +291,9 @@ void serialTemp(){
   if(!serialInit) initSerial();
 
   Serial.print(getDegreesC(tempPin));
-  Serial.print(" C, ");
+  Serial.print(" ");
+  Serial.print(getDegreesC(tempPin2));
+  Serial.print(" ");
   Serial.print(timer);
   Serial.println(" ms");
 
