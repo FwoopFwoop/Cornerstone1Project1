@@ -114,10 +114,10 @@ void heatUp(){
 
 //Plays a song to indicate the coin is probably good
 void goodSong(){
-  char notes[] = "DCbag g FFFFECEFEEEDCEDaCabbbCaaE"; 
-  int beats[] = {3,1,3,1,1,1,1,1,1,1,1,2,1,2,1,2,4,1,1,1,1,2,1,1,1,1,2, 2, 2, 2, 2, 2, 5};
-  int songLength = 33;
-  int tempo = 236;
+  char notes[] = "eaCbaEDbaCbgwe"; 
+  int beats[] = {1,1,1,1,2,1,3,3,1,1,1,2,1,4};
+  int songLength = 14;
+  int tempo = 240;
 
   int i, duration;
 
@@ -145,7 +145,7 @@ void readySong(){
   char notes[] = "gcrfgcrfd"; 
   int beats[] = {6, 6, 1, 1, 4, 4, 1, 1, 6};
   int songLength = 9;
-  int tempo = 300;
+  int tempo = 280;
 
   int i;
   int duration;
@@ -207,7 +207,7 @@ int frequency(char note){
   // corresponding frequency in Hz for the tone() function.
 
   int i;
-  const int numNotes = 12;  // number of notes we're storing
+  const int numNotes = 13;  // number of notes we're storing
 
   // The following arrays hold the note characters and their
   // corresponding frequencies. The last "C" note is uppercase
@@ -217,8 +217,8 @@ int frequency(char note){
   // For the "char" (character) type, we put single characters
   // in single quotes.
 
-  char names[] = {     'c', 'd', 'r', 'e', 'f', 'g', 'q', 'a', 'w', 'b', 'C','D' ,'E', 'F'};
-  int frequencies[] = {262, 294, 311 ,330, 349, 392, 415, 440, 466, 494, 523, 587, 659, 698};
+  char names[] = {     'c', 'd', 'r', 'e', 'f', 'g', 'q', 'a', 'w', 'b', 'C','D' ,'E'};
+  int frequencies[] = {262, 294, 311 ,330, 349, 392, 415, 440, 466, 494, 523, 587, 659};
 
   // Now we'll search through the letters in the array, and if
   // we find it, we'll return the frequency for that note.
