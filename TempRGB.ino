@@ -203,19 +203,14 @@ void badSong(){
 
 //Returns a numeric frequency given an alphabetic note
 int frequency(char note){
-  // This function takes a note character (a-g), and returns the
+  // This function takes a note character and returns the
   // corresponding frequency in Hz for the tone() function.
-
   int i;
   const int numNotes = 13;  // number of notes we're storing
 
-  // The following arrays hold the note characters and their
-  // corresponding frequencies. The last "C" note is uppercase
-  // to separate it from the first lowercase "c". If you want to
-  // add more notes, you'll need to use unique characters.
-
-  // For the "char" (character) type, we put single characters
-  // in single quotes.
+  //Each letter name corresponds to an array frequency
+  //Capital letters distinguish higher versiins of notes
+  //Seemingly random letters like r, q, and w represent accidentals
 
   char names[] = {     'c', 'd', 'r', 'e', 'f', 'g', 'q', 'a', 'w', 'b', 'C','D' ,'E'};
   int frequencies[] = {262, 294, 311 ,330, 349, 392, 415, 440, 466, 494, 523, 587, 659};
@@ -223,15 +218,17 @@ int frequency(char note){
   // Now we'll search through the letters in the array, and if
   // we find it, we'll return the frequency for that note.
 
-  for (i = 0; i < numNotes; i++)  // Step through the notes
-  {
-    if (names[i] == note)         // Is this the one?
-    {
-      return(frequencies[i]);     // Yes! Return the frequency
+  //For each member of the list of notes
+  for (i = 0; i < numNotes; i++){ 
+    //If the desired note at this point in the list
+    if (names[i] == note){    
+      //Return the corresponding frequency     
+      return(frequencies[i]);     
     }
   }
-  return(0);  // We looked through everything and didn't find it,
-              // but we still need to return a value, so return 0.
+  
+  //If no frequency is found, return 0
+  return(0); 
 }
 
 //Changes the LED to the required color
