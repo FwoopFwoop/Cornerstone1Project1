@@ -21,8 +21,12 @@ const int buzzerPin = 9;
 const int readInterval = 1000; 
 const int flashInterval = 500;
 
+//How many intervals the analysis will sample the temperature
+const int samples = 20;
+
 //Variable for storing the current time from the start of a measurement
 int timer = 0;
+
 
 //Flow control booleans
 bool serialOn;
@@ -30,8 +34,12 @@ bool serialInit;
 bool heatingUp;
 bool checkingMetal;
 
-//Calculation reference data
-const int padReadyTemp = 60; 
+//Temperature for when the pad is ready to go
+const int padReadyTemp = 48; 
+
+//Target values for silver
+const int minGoodAvgSlope = .07;
+const int maxBadAvgSlope = .06;
 
 //Enum for the different color options on the RGB LED
 enum color{
@@ -78,8 +86,7 @@ void loop() {
   //Button behaviour
   if(buttonState==LOW){
     //serialOn = true;
-    //badSong();
-    goodSong();
+    checkingMetal = true;
   }
 
   //Control flow by running one of several modes
@@ -94,6 +101,78 @@ void loop() {
 //Runs the temperature analysis on the coin currently in the device
 void checkMetal(){
   
+  //Create array to store the temperature readings
+  int reading[samples];
+
+  //For each sample that needs to be taken
+  for(int i = 0; i<samples; i++){
+    //Flash the LED
+    currentColor = (currentColor==magenta)? blue:magenta;
+
+    //In this case, we need to actually set the color here because we never
+    //return to the main loop
+    setLED();
+    
+    //Wait the read interval
+    delay(readInterval);
+    
+    //Store the temperature reading
+    reading[i] = getDegreesC(tempPin);
+  }
+
+  //Analysis
+
+  //First, calculate the average and maximum slopes
+
+  double avgSlope = 0;
+  double maxSlope = 0;
+  
+  //For each consecutive pair of samples taken
+  for(int i=0; i<samples-1; i++){
+    //Find the slope
+    double slope = (reading[i]-reading[i+1])/2;
+    
+    //Add it to the average
+    avgSlope += slope;
+
+    //Check to see if it is the new maxium, and if so set it as such
+    maxSlope = (abs(slope)>abs(maxSlope))? slope:maxSlope;
+  }
+  
+  //Finish calculating the average slope by dividing by the number of slopes considered
+  avgSlope /= samples-1;
+
+  //Start comparing using known data
+  //If average slope is large, then there is a very good chance it is silver
+  if(avgSlope>minGoodAvgSlope){
+    goodCoin();
+  }
+  //The slope might also fall in the range of "maybe?," often occurs when the silver started warm
+  else if(avgSlope>=maxBadAvgSlope){
+    maybeCoin();
+  }
+  //Otherwise, the coin is probably bad.
+  else{
+    badCoin();
+  }
+
+  checkingMetal = false;
+}
+
+//Called when the coin is believied to be silver
+void goodCoin(){
+  currentColor = green;
+  goodSong();
+}
+
+//Called when the coin is believed to be fake
+void badCoin(){
+  currentColor = red;
+  badSong();
+}
+
+void maybeCoin(){
+  currentColor = yellow;
 }
 
 //Runs until the heating pad is warm enough to function
@@ -199,7 +278,6 @@ void badSong(){
     delay(tempo/10); 
   }
 }
-
 
 //Returns a numeric frequency given an alphabetic note
 int frequency(char note){
