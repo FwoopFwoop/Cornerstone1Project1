@@ -34,11 +34,10 @@ bool serialInit;
 bool heatingUp;
 bool checkingMetal;
 
-//Temperature for when the pad is ready to go
-const int padReadyTemp = 19; 
-
-//Temperature for when temp probe is cooled down
-const int probeReadyTemp = 16;
+//Temperature value for storing data during heatup sequence
+double padTemp;
+//Minimum "heated" temperature
+const double readyTemp = 19;
 
 //Known values for silver coin, based off of observed data
 const double silverSlope = 0.0492;
@@ -74,6 +73,9 @@ void setup() {
   serialInit = false;
   heatingUp = true;
   checkingMetal = false;
+
+  //Defualt reading of the heating pad
+  padTemp = getDegreesC(tempPin2);
 
   //Set default state of the LED
   currentColor = off;
@@ -203,15 +205,16 @@ void heatUp(){
   //Flash red and yellow to indicate the pad is heating up
   currentColor = (currentColor==red)? yellow : red;
 
-  //If the pad is heated up, turn on blue "Ready to Read" LED, then exits heating mode
-  if(getDegreesC(tempPin2)>=padReadyTemp /*&& getDegreesC(tempPin)<=probeReadyTemp*/){
+  //If the pad temperature is no longer increasing very much,
+  //And is relatively warm,it is done heating up.
+  if(abs(padTemp-getDegreesC(tempPin2)<.6 && padTemp>=readyTemp){
     currentColor = blue;
     heatingUp = false;
     readySong();
-    return;
+  }else{
+    padTemp = getDegreesC(tempPin2);
+    delay(flashInterval); 
   }
-
-  delay(flashInterval);
 }
 
 //Plays a song to indicate the coin is probably good
