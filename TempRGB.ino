@@ -22,7 +22,7 @@ const int readInterval = 1000;
 const int flashInterval = 500;
 
 //How many intervals the analysis will sample the temperature
-const int samples = 20;
+const int samples = 30;
 
 //Variable for storing the current time from the start of a measurement
 int timer = 0;
@@ -35,11 +35,13 @@ bool heatingUp;
 bool checkingMetal;
 
 //Temperature for when the pad is ready to go
-const int padReadyTemp = 48; 
+const int padReadyTemp = 19; 
 
-//Target values for silver
-const int minGoodAvgSlope = .07;
-const int maxBadAvgSlope = .06;
+//Temperature for when temp probe is cooled down
+const int probeReadyTemp = 16;
+
+//Known values for silver coin, based off of observed data
+const double silverSlope = 0.0492;
 
 //Enum for the different color options on the RGB LED
 enum color{
@@ -65,7 +67,7 @@ void setup() {
   pinMode(greenPin, OUTPUT);
   pinMode(bluePin, OUTPUT);
   pinMode(buzzerPin, OUTPUT);
-  pinMode(buttonPin, INPUT);
+  pinMode(buttonPin, INPUT);  
 
   //Set default states for program flow control
   serialOn = false;
@@ -100,62 +102,83 @@ void loop() {
 
 //Runs the temperature analysis on the coin currently in the device
 void checkMetal(){
+
+  Serial.begin(9600);
   
   //Create array to store the temperature readings
-  int reading[samples];
+  double reading[samples];
+
+  //Wait a second or two to actually read because when the
+  //coin and sensor first touch they exchange some heat
+
+  delay(readInterval*2);
 
   //For each sample that needs to be taken
   for(int i = 0; i<samples; i++){
     //Flash the LED
     currentColor = (currentColor==magenta)? blue:magenta;
 
-    //In this case, we need to actually set the color here because we never
-    //return to the main loop
+    //In this case, we need to actually set the color here because
+    //we never return to the main loop
     setLED();
     
     //Wait the read interval
     delay(readInterval);
     
-    //Store the temperature reading
-    reading[i] = getDegreesC(tempPin);
+    //Store the temperature difference between coin and pad
+    reading[i] = getDegreesC(tempPin2) - getDegreesC(tempPin);
+
+    Serial.print(i);
+    Serial.print(" ");
+    Serial.println(reading[i]);
   }
 
   //Analysis
+  //I am using a trendline algorithim I learned from http://classroom.synonym.com/calculate-trendline-2709.html
+  //The code implementation is my own
 
-  //First, calculate the average and maximum slopes
-
-  double avgSlope = 0;
-  double maxSlope = 0;
+  //a is the number of samples times the sum of x*y for each (x,y)
+  //b is the sum of all x values times the sum of all y values
+  //c is the number of samples times the sum of all squared x values
+  //d is the sum of all x values squared
   
-  //For each consecutive pair of samples taken
-  for(int i=0; i<samples-1; i++){
-    //Find the slope
-    double slope = (reading[i]-reading[i+1])/2;
-    
-    //Add it to the average
-    avgSlope += slope;
-
-    //Check to see if it is the new maxium, and if so set it as such
-    maxSlope = (abs(slope)>abs(maxSlope))? slope:maxSlope;
+  double a = 0.0;
+  double b;
+  double c = 0.0;
+  double d;
+  
+  double xsum = 0.0;
+  double ysum = 0.0;
+  
+  for(int i =0; i<samples; i++){
+    a += (i * 1.0)* reading[i];
+    ysum += reading[i];
+    xsum += i;
+    c += i*i;
   }
   
-  //Finish calculating the average slope by dividing by the number of slopes considered
-  avgSlope /= samples-1;
+  a*= samples;
+  b = xsum*ysum;
+  c*= samples; 
+  d = xsum*xsum;
 
-  //Start comparing using known data
-  //If average slope is large, then there is a very good chance it is silver
-  if(avgSlope>minGoodAvgSlope){
+  //Trendline slope is (a-b)/(c-d)
+  double slope = abs(((a-b)*1.0)/((c-d)*1.0));
+  
+  //If slope is less than or equal to .4, it is probably silver
+  if(slope<=.04){
     goodCoin();
   }
-  //The slope might also fall in the range of "maybe?," often occurs when the silver started warm
-  else if(avgSlope>=maxBadAvgSlope){
+  //Otherwise, if it is on (.4,.5) it might be
+  if(slope<=.05){
     maybeCoin();
   }
-  //Otherwise, the coin is probably bad.
+  //Otherwise, probably fake
   else{
     badCoin();
   }
-
+  
+  Serial.println(slope);
   checkingMetal = false;
 }
 
@@ -181,7 +204,7 @@ void heatUp(){
   currentColor = (currentColor==red)? yellow : red;
 
   //If the pad is heated up, turn on blue "Ready to Read" LED, then exits heating mode
-  if(getDegreesC(tempPin2)>=padReadyTemp){
+  if(getDegreesC(tempPin2)>=padReadyTemp /*&& getDegreesC(tempPin)<=probeReadyTemp*/){
     currentColor = blue;
     heatingUp = false;
     readySong();
@@ -395,6 +418,7 @@ double getDegreesC(int pin){
 
 //Returns the analog read of the pin as a voltage
 double getVoltage(int pin){
-  return (analogRead(pin) * 0.004882814);
+  //Converts the 0-1023 analog range into volts
+  return (analogRead(pin)  * (3.3/1023.0));
 }
 
