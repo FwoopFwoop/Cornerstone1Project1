@@ -167,12 +167,15 @@ void checkMetal(){
   //Trendline slope is (a-b)/(c-d)
   double slope = abs(((a-b)*1.0)/((c-d)*1.0));
   
+  if(slope<=.002){
+    badCoin();
+  }
   //If slope is less than or equal to .4, it is probably silver
-  if(slope<=.04){
+  else if(slope<=.04){
     goodCoin();
   }
   //Otherwise, if it is on (.4,.5) it might be
-  if(slope<=.05){
+  if(slope<=.045){
     maybeCoin();
   }
   //Otherwise, probably fake
@@ -207,7 +210,7 @@ void heatUp(){
 
   //If the pad temperature is no longer increasing very much,
   //And is relatively warm,it is done heating up.
-  if(abs(padTemp-getDegreesC(tempPin2)<.6 && padTemp>=readyTemp){
+  if(abs(padTemp-getDegreesC(tempPin2))<.6 && padTemp>=readyTemp){
     currentColor = blue;
     heatingUp = false;
     readySong();
